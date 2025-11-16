@@ -1,0 +1,104 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModels1="clr-namespace:StardewModManager.AvaloniaImpl.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="StardewModManager.AvaloniaImpl.Views.MainWindow"
+        x:DataType="viewModels1:MainWindowViewModel"
+        Icon="/Assets/stardew_mod_manager_icon.ico"
+        Title="Stardew Mod Manager"
+        CanResize="False"
+        CanMaximize="False"
+        Width="500"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterScreen"
+        x:Name="Root">
+    <Design.DataContext>
+        <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <viewModels1:MainWindowViewModel />
+    </Design.DataContext>
+
+    <StackPanel Spacing="8" Margin="8">
+        <Grid ColumnDefinitions="* Auto" RowDefinitions="Auto Auto" IsVisible="{Binding CanSelectUser}">
+            <TextBlock Text="Пользователь: " VerticalAlignment="Top" />
+            <ItemsControl Grid.Row="0" Grid.Column="1" ItemsSource="{Binding SteamUsers}" HorizontalAlignment="Left">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <RadioButton GroupName="Users" Content="{Binding User}"
+                                     IsChecked="{Binding IsSelected}"
+                                     Command="{Binding #Root.ViewModel.SelectUser}"
+                                     CommandParameter="{Binding User}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Separator Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" />
+        </Grid>
+
+        <Grid ColumnDefinitions="* Auto" ColumnSpacing="8">
+            <TextBox Watermark="Путь до Stardew Valley" UseFloatingWatermark="True" Text="{Binding StardewPath}" />
+
+            <Button Grid.Column="1" Content="Выбрать" VerticalAlignment="Bottom"
+                    Command="{Binding SelectStardewPathAsync}" />
+        </Grid>
+
+        <Separator HorizontalAlignment="Stretch" />
+
+        <Grid RowDefinitions="Auto Auto Auto" ColumnDefinitions="* Auto" IsVisible="{Binding !IsSMAPIInstalled}">
+            <TextBlock Text="Загрузчик модов не установлен" Foreground="IndianRed" VerticalAlignment="Center" />
+            <Button Grid.Row="0" Grid.Column="1" Content="Установить" ToolTip.Tip="Установить SMAPI"
+                    Command="{Binding InstallSMAPIAsync}"
+                    IsEnabled="{Binding SMAPIInstallationProgress, Converter={x:Static ObjectConverters.IsNull}}" />
+
+            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                        IsVisible="{Binding SMAPIInstallationProgress, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        Margin="0 8 0 0" Spacing="4">
+                <TextBlock
+                    Text="{Binding SMAPIInstallationProgress^.StageName}" />
+                <ProgressBar IsIndeterminate="True" />
+            </StackPanel>
+        </Grid>
+
+        <Grid ColumnDefinitions="* Auto" IsVisible="{Binding IsSMAPIInstalled}">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Загрузчик модов (SMAPI): " />
+                <TextBlock Text="Включен" Foreground="PaleGreen" IsVisible="{Binding IsSMAPIEnabled}" />
+                <TextBlock Text="Выключен" Foreground="IndianRed" IsVisible="{Binding !IsSMAPIEnabled}" />
+            </StackPanel>
+            <ToggleSwitch Grid.Column="1" OffContent="" OnContent="" IsChecked="{Binding IsSMAPIEnabled, Mode=TwoWay}"
+                          Command="{Binding ToggleSMAPIEnabled}" />
+        </Grid>
+
+        <TextBlock Text="ВНИМАНИЕ! При изменении этого параметра процесс Steam будет принудительно закрыт!"
+                   TextWrapping="Wrap" Foreground="Gold" />
+
+        <Separator HorizontalAlignment="Stretch" />
+
+        <Button Content="Установить сборку" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                Command="{Binding InstallModPackAsync}" />
+
+        <TextBlock Text="{Binding Mods.Count, StringFormat='Установленные моды ({0}):'}"
+                   IsVisible="{Binding Mods.Count}" />
+
+        <ScrollViewer MaxHeight="350">
+            <ItemsControl ItemsSource="{Binding Mods}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled}"
+                                  Command="{Binding  #Root.ViewModel.ToggleMod}" CommandParameter="{Binding .}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <Button Content="Экспортировать сборку" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                Command="{Binding ExportModPack}" IsEnabled="{Binding Mods.Count}" />
+
+        <Separator HorizontalAlignment="Stretch" />
+
+        <Button Classes="accent" Content="Запустить Stardew" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                Command="{Binding LaunchStardew}" />
+    </StackPanel>
+</Window>

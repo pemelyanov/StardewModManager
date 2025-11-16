@@ -1,0 +1,19 @@
+<Project>
+  <!--Версии пакетов-->
+  <PropertyGroup>
+    <AvaloniaVersion>11.3.4</AvaloniaVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="Avalonia" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="Avalonia.Diagnostics" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="Avalonia.ReactiveUI" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="BigHelp.Http" Version="0.3.2" />
+    <PackageVersion Include="NLog" Version="6.0.6" />
+    <PackageVersion Include="Octokit" Version="14.0.0" />
+    <PackageVersion Include="ReactiveUI.Fody" Version="19.5.41" />
+    <PackageVersion Include="System.Reactive" Version="6.1.0" />
+  </ItemGroup>
+</Project>
