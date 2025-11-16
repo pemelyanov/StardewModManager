@@ -1,6 +1,7 @@
 ﻿namespace StardewModManager.AvaloniaImpl.ViewModels;
 
 using Core.Data;
+using FanatikiLauncher.MVVM.ViewModels;
 using ReactiveUI.Fody.Helpers;
 
 public class SteamUserViewModel(SteamUser user) : ViewModelBase

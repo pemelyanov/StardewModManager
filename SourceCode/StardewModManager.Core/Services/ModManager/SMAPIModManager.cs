@@ -20,6 +20,8 @@ public class SMAPIModManager : IModManger
     private readonly        IConfigurationService<ModManagerConfig> m_configurationService;
     private const           string ModsFolder = "Mods";
     private const           string DisabledModsFolder = "DisabledMods";
+    private readonly        BehaviorSubject<bool> m_isSMAPIInstalled;
+    private readonly        BehaviorSubject<bool> m_isSMAPIEnabled;
 
     public SMAPIModManager(ISteamManager steamManager, IConfigurationService<ModManagerConfig> configurationService)
     {
@@ -28,19 +30,22 @@ public class SMAPIModManager : IModManger
 
         StardewPath = ResolveStardewPath();
 
-        IsInstalled = CheckIsSMAPIInstalled();
-        IsEnabled = CheckIsSMAPIEnabled();
+        var isInstalled = CheckIsSMAPIInstalled();
+        var isEnabled = CheckIsSMAPIEnabled();
+
+        m_isSMAPIInstalled = new BehaviorSubject<bool>(isInstalled);
+        m_isSMAPIEnabled = new BehaviorSubject<bool>(isEnabled);
 
         UpdateModsList();
-        
+
         steamManager.CurrentUserChanged += SteamManagerOn_CurrentUserChanged;
     }
 
     public string StardewPath { get; private set; }
 
-    public bool IsEnabled { get; private set; }
+    public IObservable<bool> IsEnabled => m_isSMAPIEnabled;
 
-    public bool IsInstalled { get; private set; }
+    public IObservable<bool> IsInstalled => m_isSMAPIInstalled;
 
     public IReadOnlyList<Mod> Mods { get; private set; } = [];
 
@@ -108,11 +113,14 @@ public class SMAPIModManager : IModManger
 
             await InstallSMAPIAsync(extractPath, StardewPath);
 
-            IsInstalled = CheckIsSMAPIInstalled();
+            m_isSMAPIInstalled.OnNext(CheckIsSMAPIInstalled());
 
-            if (IsInstalled)
+            if (m_isSMAPIInstalled.Value)
             {
                 s_logger.Info("SMAPI installation completed successfully!");
+                
+                if(!m_isSMAPIEnabled.Value)
+                    ToggleIsEnabled();
             }
             else
             {
@@ -136,18 +144,18 @@ public class SMAPIModManager : IModManger
 
         StardewPath = ResolveStardewPath();
 
-        IsInstalled = CheckIsSMAPIInstalled();
+        m_isSMAPIInstalled.OnNext(CheckIsSMAPIInstalled());
     }
 
     public void ToggleIsEnabled()
     {
         m_steamManager.CloseSteam();
 
-        var launchOptions = IsEnabled ? "" : GetStardewLaunchOptions();
+        var launchOptions = m_isSMAPIEnabled.Value ? "" : GetStardewLaunchOptions();
 
         m_steamManager.SetLaunchOptions(SteamAppIds.StardewValley, launchOptions);
 
-        IsEnabled = !IsEnabled;
+        m_isSMAPIEnabled.OnNext(!m_isSMAPIEnabled.Value);
     }
 
     public async Task ExportToModPackAsync(string path)
@@ -427,6 +435,6 @@ public class SMAPIModManager : IModManger
 
     private void SteamManagerOn_CurrentUserChanged(object? sender, SteamUser e)
     {
-        IsEnabled = CheckIsSMAPIEnabled();
+        m_isSMAPIEnabled.OnNext(CheckIsSMAPIEnabled());
     }
 }

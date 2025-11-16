@@ -6,9 +6,9 @@ public interface IModManger
 {
     string StardewPath { get; }
     
-    bool IsEnabled { get; }
+    IObservable<bool> IsEnabled { get; }
     
-    bool IsInstalled { get; }
+    IObservable<bool>  IsInstalled { get; }
     
     IReadOnlyList<Mod> Mods { get; }
     

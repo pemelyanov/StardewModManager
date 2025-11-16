@@ -26,5 +26,5 @@ sealed class Program
         .WithInterFont()
         .LogToTrace()
         .UseReactiveUI()
-        .UseBootstrapper<StardewModManagerBootstrapper>();
+        .UseBootstrapper<StardewModManagerBootstrapper>([typeof(App).Assembly]);
 }

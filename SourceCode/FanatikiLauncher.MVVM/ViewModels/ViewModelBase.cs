@@ -18,16 +18,11 @@ public class ViewModelBase : ReactiveValidationObject, IActivatableViewModel
     #endregion
 
     #region LifeCycle
-
-    /// <summary>
-    /// Инициализирует вьюмодель с переданным <see cref="ILifetimeScope" />
-    /// </summary>
-    /// <param name="lifetimeScope"></param>
+    
     protected ViewModelBase()
     {
-        ViewForMixins.WhenActivated(
-            (IActivatableViewModel)this,
-            (CompositeDisposable disposables) =>
+        this.WhenActivated(
+            disposables =>
             {
                 if (!m_hasFirstActivation)
                 {

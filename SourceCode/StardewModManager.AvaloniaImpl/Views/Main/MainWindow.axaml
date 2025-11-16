@@ -3,16 +3,26 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:main="clr-namespace:StardewModManager.AvaloniaImpl.Views.Main"
+        xmlns:controls="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+        xmlns:fluent="clr-namespace:FluentIcons.Avalonia.Fluent;assembly=FluentIcons.Avalonia.Fluent"
+        xmlns:markupExtensions="clr-namespace:FluentIcons.Avalonia.Fluent.MarkupExtensions;assembly=FluentIcons.Avalonia.Fluent"
+        xmlns:reactiveUi="http://reactiveui.net"
+        xmlns:mods="clr-namespace:StardewModManager.AvaloniaImpl.Views.Mods"
+        xmlns:settings="clr-namespace:StardewModManager.AvaloniaImpl.Views.Settings"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="StardewModManager.AvaloniaImpl.Views.Main.MainWindow"
         x:DataType="main:MainWindowViewModel"
         Icon="/Assets/stardew_mod_manager_icon.ico"
         Title="Stardew Mod Manager"
-        CanResize="False"
-        CanMaximize="False"
-        Width="500"
+        Width="1280"
+        Height="720"
+        MinWidth="1280"
+        MinHeight="720"
         SizeToContent="Height"
         WindowStartupLocation="CenterScreen"
+        TransparencyLevelHint="AcrylicBlur"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True"
         x:Name="Root">
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
@@ -20,85 +30,81 @@
         <main:MainWindowViewModel />
     </Design.DataContext>
 
-    <StackPanel Spacing="8" Margin="8">
-        <Grid ColumnDefinitions="* Auto" RowDefinitions="Auto Auto" IsVisible="{Binding CanSelectUser}">
-            <TextBlock Text="Пользователь: " VerticalAlignment="Top" />
-            <ItemsControl Grid.Row="0" Grid.Column="1" ItemsSource="{Binding SteamUsers}" HorizontalAlignment="Left">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <RadioButton GroupName="Users" Content="{Binding User}"
-                                     IsChecked="{Binding IsSelected}"
-                                     Command="{Binding #Root.ViewModel.SelectUser}"
-                                     CommandParameter="{Binding User}" />
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+    <Panel Background="Transparent">
+        <ExperimentalAcrylicBorder>
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial BackgroundSource="Digger"
+                                             TintColor="{DynamicResource SystemChromeBlackHighColor}"
+                                             TintOpacity="1"
+                                             MaterialOpacity="0" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
 
-            <Separator Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" />
-        </Grid>
+        <controls:NavigationView x:Name="NavigationView" IsPaneOpen="False" IsSettingsVisible="False"
+                                 Background="Transparent">
+            <controls:NavigationView.MenuItems>
+                <controls:NavigationViewItem Content="Моды" IsSelected="True" Tapped="NavigationItem_OnTapped"
+                                             Tag="{x:Type mods:ModsPageViewModel}">
+                    <controls:NavigationViewItem.IconSource>
+                        <fluent:SymbolIconSource Symbol="Box" />
+                    </controls:NavigationViewItem.IconSource>
+                </controls:NavigationViewItem>
+                <controls:NavigationViewItem Content="Настройки" Tapped="NavigationItem_OnTapped"
+                                             Tag="{x:Type settings:SettingsPageViewModel}">
+                    <controls:NavigationViewItem.IconSource>
+                        <fluent:SymbolIconSource Symbol="Settings" />
+                    </controls:NavigationViewItem.IconSource>
+                </controls:NavigationViewItem>
+            </controls:NavigationView.MenuItems>
 
-        <Grid ColumnDefinitions="* Auto" ColumnSpacing="8">
-            <TextBox Watermark="Путь до Stardew Valley" UseFloatingWatermark="True" Text="{Binding StardewPath}" IsReadOnly="True" />
+            <controls:NavigationView.PaneFooter>
+                <StackPanel>
+                    <Separator HorizontalAlignment="Stretch" Margin="10 0 0 8" />
+                    <ToggleButton Width="32" Height="32" Margin="10 0 0 0" Padding="4"
+                                  HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                  Content="{markupExtensions:SymbolIcon Symbol=Person}"
+                                  IsChecked="{Binding #NavigationView.IsPaneOpen, Mode=TwoWay}">
+                        <Grid.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="CanSelectUser" />
+                                <Binding Path="!#NavigationView.IsPaneOpen" />
+                            </MultiBinding>
+                        </Grid.IsVisible>
+                    </ToggleButton>
+                    <Grid ColumnDefinitions="* Auto" RowDefinitions="Auto Auto" Margin="8">
+                        <Grid.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="CanSelectUser" />
+                                <Binding Path="#NavigationView.IsPaneOpen" />
+                            </MultiBinding>
+                        </Grid.IsVisible>
+                        <TextBlock Text="Пользователь: " VerticalAlignment="Top" />
+                        <ItemsControl Grid.Row="0" Grid.Column="1" ItemsSource="{Binding SteamUsers}"
+                                      HorizontalAlignment="Left">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <RadioButton GroupName="Users" Content="{Binding User}"
+                                                 IsChecked="{Binding IsSelected}"
+                                                 Command="{Binding #Root.ViewModel.SelectUser}"
+                                                 CommandParameter="{Binding User}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </StackPanel>
+            </controls:NavigationView.PaneFooter>
 
-            <Button Grid.Column="1" Content="Выбрать" VerticalAlignment="Bottom"
-                    Command="{Binding SelectStardewPathAsync}" />
-        </Grid>
+            <Grid RowDefinitions="Auto *" Margin="8" RowSpacing="8">
+                <Border Height="30" Background="Transparent" PointerPressed="InputElement_OnPointerPressed">
+                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="8 0 8 0" VerticalAlignment="Center">
+                        <Image Source="/Assets/stardew_mod_manager_icon.ico" Width="16" Height="16"
+                               VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding #Root.Title}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
 
-        <Separator HorizontalAlignment="Stretch" />
-
-        <Grid RowDefinitions="Auto Auto Auto" ColumnDefinitions="* Auto" IsVisible="{Binding !IsSMAPIInstalled}">
-            <TextBlock Text="Загрузчик модов не установлен" Foreground="IndianRed" VerticalAlignment="Center" />
-            <Button Grid.Row="0" Grid.Column="1" Content="Установить" ToolTip.Tip="Установить SMAPI"
-                    Command="{Binding InstallSMAPIAsync}"
-                    IsEnabled="{Binding SMAPIInstallationProgress, Converter={x:Static ObjectConverters.IsNull}}" />
-
-            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-                        IsVisible="{Binding SMAPIInstallationProgress, Converter={x:Static ObjectConverters.IsNotNull}}"
-                        Margin="0 8 0 0" Spacing="4">
-                <TextBlock
-                    Text="{Binding SMAPIInstallationProgress^.StageName}" />
-                <ProgressBar IsIndeterminate="True" />
-            </StackPanel>
-        </Grid>
-
-        <Grid ColumnDefinitions="* Auto" IsVisible="{Binding IsSMAPIInstalled}">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Загрузчик модов (SMAPI): " />
-                <TextBlock Text="Включен" Foreground="PaleGreen" IsVisible="{Binding IsSMAPIEnabled}" />
-                <TextBlock Text="Выключен" Foreground="IndianRed" IsVisible="{Binding !IsSMAPIEnabled}" />
-            </StackPanel>
-            <ToggleSwitch Grid.Column="1" OffContent="" OnContent="" IsChecked="{Binding IsSMAPIEnabled, Mode=TwoWay}"
-                          Command="{Binding ToggleSMAPIEnabled}" />
-        </Grid>
-
-        <TextBlock Text="ВНИМАНИЕ! При изменении этого параметра процесс Steam будет принудительно закрыт!"
-                   TextWrapping="Wrap" Foreground="Gold" />
-
-        <Separator HorizontalAlignment="Stretch" />
-
-        <Button Content="Установить сборку" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                Command="{Binding InstallModPackAsync}" />
-
-        <TextBlock Text="{Binding Mods.Count, StringFormat='Установленные моды ({0}):'}"
-                   IsVisible="{Binding Mods.Count}" />
-
-        <ScrollViewer MaxHeight="350">
-            <ItemsControl ItemsSource="{Binding Mods}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled}"
-                                  Command="{Binding  #Root.ViewModel.ToggleMod}" CommandParameter="{Binding .}" />
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
-
-        <Button Content="Экспортировать сборку" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                Command="{Binding ExportModPackAsync}" IsEnabled="{Binding Mods.Count}" />
-
-        <Separator HorizontalAlignment="Stretch" />
-
-        <Button Classes="accent" Content="Запустить Stardew" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                Command="{Binding LaunchStardew}" />
-    </StackPanel>
+                <reactiveUi:RoutedViewHost Grid.Row="1" Router="{Binding Router}" />
+            </Grid>
+        </controls:NavigationView>
+    </Panel>
 </Window>

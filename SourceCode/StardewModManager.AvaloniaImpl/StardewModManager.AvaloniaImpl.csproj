@@ -24,8 +24,11 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="Avalonia.ReactiveUI" />
+        <PackageReference Include="FluentAvaloniaUI" />
+        <PackageReference Include="FluentIcons.Avalonia.Fluent" />
         <PackageReference Include="NLog" />
         <PackageReference Include="ReactiveUI.Fody" />
+        <PackageReference Include="Xaml.Behaviors" />
     </ItemGroup>
 
     <ItemGroup>

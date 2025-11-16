@@ -1,0 +1,80 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:mods="clr-namespace:StardewModManager.AvaloniaImpl.Views.Mods"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="StardewModManager.AvaloniaImpl.Views.Mods.ModsPage"
+             x:DataType="mods:ModsPageViewModel"
+             x:Name="Root">
+    <Grid RowDefinitions="Auto * Auto" Margin="8" RowSpacing="8">
+        <StackPanel Grid.Row="0" Spacing="8">
+            <Separator HorizontalAlignment="Stretch" />
+
+            <Grid RowDefinitions="Auto Auto Auto" ColumnDefinitions="* Auto"
+                  IsVisible="{Binding !IsSMAPIInstalled^}">
+                <TextBlock Text="Загрузчик модов не установлен" Foreground="IndianRed"
+                           VerticalAlignment="Center" />
+                <Button Grid.Row="0" Grid.Column="1" Content="Установить" ToolTip.Tip="Установить SMAPI"
+                        Command="{Binding InstallSMAPIAsync}"
+                        IsEnabled="{Binding SMAPIInstallationProgress, Converter={x:Static ObjectConverters.IsNull}}" />
+
+                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                            IsVisible="{Binding SMAPIInstallationProgress, Converter={x:Static ObjectConverters.IsNotNull}}"
+                            Margin="0 8 0 0" Spacing="4">
+                    <TextBlock Text="{Binding SMAPIInstallationProgress^.StageName}" />
+                    <ProgressBar IsIndeterminate="True" />
+                </StackPanel>
+            </Grid>
+
+            <Grid ColumnDefinitions="* Auto" IsVisible="{Binding IsSMAPIInstalled^}">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Загрузчик модов (SMAPI): " />
+                    <TextBlock Text="Включен" Foreground="PaleGreen" IsVisible="{Binding IsSMAPIEnabled^}" />
+                    <TextBlock Text="Выключен" Foreground="IndianRed"
+                               IsVisible="{Binding !IsSMAPIEnabled^}" />
+                </StackPanel>
+                <ToggleSwitch Grid.Column="1" OffContent="" OnContent=""
+                              IsChecked="{Binding IsSMAPIEnabled^}"
+                              Command="{Binding ToggleSMAPIEnabled}" />
+            </Grid>
+
+            <TextBlock
+                Text="ВНИМАНИЕ! При изменении этого параметра процесс Steam будет принудительно закрыт!"
+                TextWrapping="Wrap" Foreground="Gold" />
+
+            <Separator HorizontalAlignment="Stretch" />
+
+            <Button Content="Установить сборку" HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"
+                    Command="{Binding InstallModPackAsync}" />
+
+            <TextBlock Text="{Binding Mods.Count, StringFormat='Установленные моды ({0}):'}"
+                       IsVisible="{Binding Mods.Count}" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1">
+            <ItemsControl ItemsSource="{Binding Mods}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled}"
+                                  Command="{Binding  #Root.ViewModel.ToggleMod}"
+                                  CommandParameter="{Binding .}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="2" Spacing="8">
+            <Button Content="Экспортировать сборку" HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"
+                    Command="{Binding ExportModPackAsync}" IsEnabled="{Binding Mods.Count}" />
+
+            <Separator HorizontalAlignment="Stretch" />
+
+            <Button Classes="accent" Content="Запустить Stardew" HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"
+                    Command="{Binding LaunchStardew}" />
+        </StackPanel>
+    </Grid>
+</UserControl>

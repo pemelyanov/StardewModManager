@@ -5,13 +5,18 @@ using Core.Services.Configuration;
 using Core.Services.ModManager;
 using Core.Services.SteamManager;
 using FanatikiLauncher.MVVM;
+using ReactiveUI;
 using Views.Main;
+using Views.Mods;
+using Views.Settings;
 
 public class StardewModManagerBootstrapper : BootstrapperBase<StardewModManagerBootstrapper>
 {
     protected override void RegisterViewModels(ContainerBuilder builder)
     {
-        builder.RegisterType<MainWindowViewModel>().SingleInstance();
+        builder.RegisterType<MainWindowViewModel>().As<IScreen>().AsSelf().SingleInstance();
+        builder.RegisterType<ModsPageViewModel>().SingleInstance();
+        builder.RegisterType<SettingsPageViewModel>().SingleInstance();
     }
 
     protected override void RegisterServices(ContainerBuilder builder)
