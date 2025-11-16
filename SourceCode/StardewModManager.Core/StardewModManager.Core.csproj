@@ -7,7 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="BigHelp.Http" />
       <PackageReference Include="NLog" />
+      <PackageReference Include="Octokit" />
       <PackageReference Include="System.Reactive" />
     </ItemGroup>
 

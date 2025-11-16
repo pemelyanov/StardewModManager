@@ -24,9 +24,7 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="Avalonia.ReactiveUI" />
-        <PackageReference Include="BigHelp.Http" />
         <PackageReference Include="NLog" />
-        <PackageReference Include="Octokit" />
         <PackageReference Include="ReactiveUI.Fody" />
     </ItemGroup>
 
