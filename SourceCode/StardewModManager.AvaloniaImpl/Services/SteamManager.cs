@@ -339,7 +339,7 @@ public class SteamManager
         return null;
     }
 
-    private static string GetSteamPathFromEnvironment()
+    private static string? GetSteamPathFromEnvironment()
     {
         // Переменная окружения STEAM_PATH (пользовательская)
         var steamPath = Environment.GetEnvironmentVariable("STEAM_PATH");

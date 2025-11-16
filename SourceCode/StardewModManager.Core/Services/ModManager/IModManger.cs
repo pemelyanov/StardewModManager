@@ -1,6 +1,6 @@
-﻿namespace StardewModManager.Core.Services.SMAPIManager;
+﻿namespace StardewModManager.Core.Services.ModManager;
 
-using Data;
+using StardewModManager.Core.Data;
 
 public interface IModManger
 {
@@ -8,5 +8,5 @@ public interface IModManger
     
     Task InstallLatestAsync(IObserver<LoadingProgress>? observer);
 
-    void SetCustomStardewPath(string path);
+    void SetCustomStardewPath(string? path);
 }

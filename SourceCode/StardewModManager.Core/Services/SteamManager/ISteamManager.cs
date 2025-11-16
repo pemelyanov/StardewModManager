@@ -10,11 +10,13 @@ public interface ISteamManager
 
     public IReadOnlyList<SteamUser> GetLocalUsersList();
 
-    public void SetCustomSteamPath(string path);
+    public void SetCustomSteamPath(string? path);
 
     public void SetLaunchOptions(string appId, string launchOptions);
 
     public string? GetLaunchOptions(string appId);
 
     public void LaunchSteamGame(string appId);
+
+    public void CloseSteam();
 }

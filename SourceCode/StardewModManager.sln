@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StardewModManager.AvaloniaI
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StardewModManager.Core", "StardewModManager.Core\StardewModManager.Core.csproj", "{69D7B353-CCDE-4166-BF53-E8C6A75AB1C2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitHubManager", "GitHubManager\GitHubManager.csproj", "{53327F3C-8024-4FEF-950B-33EE00D49F72}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,5 +28,9 @@ Global
 		{69D7B353-CCDE-4166-BF53-E8C6A75AB1C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{69D7B353-CCDE-4166-BF53-E8C6A75AB1C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{69D7B353-CCDE-4166-BF53-E8C6A75AB1C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53327F3C-8024-4FEF-950B-33EE00D49F72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53327F3C-8024-4FEF-950B-33EE00D49F72}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53327F3C-8024-4FEF-950B-33EE00D49F72}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53327F3C-8024-4FEF-950B-33EE00D49F72}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
