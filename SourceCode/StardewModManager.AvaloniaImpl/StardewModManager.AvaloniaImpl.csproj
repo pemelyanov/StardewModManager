@@ -31,10 +31,14 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Data\" />
+      <ProjectReference Include="..\FanatikiLauncher.MVVM\FanatikiLauncher.MVVM.csproj" />
+      <ProjectReference Include="..\StardewModManager.Core\StardewModManager.Core.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\StardewModManager.Core\StardewModManager.Core.csproj" />
+      <Compile Update="Views\Main\MainWindow.axaml.cs">
+        <DependentUpon>MainWindow.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
     </ItemGroup>
 </Project>

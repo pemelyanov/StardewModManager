@@ -1,10 +1,9 @@
-namespace StardewModManager.AvaloniaImpl.Views;
+namespace StardewModManager.AvaloniaImpl.Views.Main;
 
 using System.Threading.Tasks;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.ReactiveUI;
-using ViewModels;
 
 public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 {

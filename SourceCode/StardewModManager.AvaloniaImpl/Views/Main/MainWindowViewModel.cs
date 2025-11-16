@@ -1,4 +1,4 @@
-﻿namespace StardewModManager.AvaloniaImpl.ViewModels;
+﻿namespace StardewModManager.AvaloniaImpl.Views.Main;
 
 using System;
 using System.Collections.Generic;
@@ -7,24 +7,31 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
-using Core.Data;
 using ReactiveUI.Fody.Helpers;
-using Services;
+using Core.Data;
+using Core.Services.ModManager;
+using Core.Services.SteamManager;
+using ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
-    private const string StardewValleyAppId = "413150";
-    private const string ModsFolder         = "Mods";
-    private const string DisabledModsFolder = "DisabledMods";
+    private readonly ISteamManager m_steamManager;
+    private readonly IModManger    m_modManger;
+    private const    string        StardewValleyAppId = "413150";
+    private const    string        ModsFolder         = "Mods";
+    private const    string        DisabledModsFolder = "DisabledMods";
 
-    public MainWindowViewModel()
+    public MainWindowViewModel(ISteamManager steamManager, IModManger modManger)
     {
+        m_steamManager = steamManager;
+        m_modManger = modManger;
+        StardewPath = m_modManger.StardewPath;
         IsSMAPIInstalled = CheckIsSMAPIInstalled();
 
-        SteamUsers = SteamManager.Instance.GetLocalUsersList().Select(it => new SteamUserViewModel(it)).ToArray();
+        SteamUsers = steamManager.GetLocalUsersList().Select(it => new SteamUserViewModel(it)).ToArray();
 
         var firstUser = SteamUsers.FirstOrDefault();
-        SteamManager.Instance.CurrentUser = firstUser?.User;
+        steamManager.CurrentUser = firstUser?.User;
 
         if (firstUser is not null) firstUser.IsSelected = true;
 
@@ -35,12 +42,7 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     [Reactive]
-    public string StardewPath { get; set; } = Path.Combine(
-        SteamManager.Instance.SteamPath,
-        "steamapps",
-        "common",
-        "Stardew Valley"
-    );
+    public string StardewPath { get; set; }
 
     [Reactive]
     public bool IsSMAPIInstalled { get; private set; }
@@ -92,7 +94,7 @@ public class MainWindowViewModel : ViewModelBase
 
         try
         {
-            await SMAPIInstallService.Instance.InstallLatestAsync(progress, StardewPath);
+            await m_modManger.InstallLatestAsync(progress);
         }
         catch (Exception e)
         {
@@ -109,25 +111,25 @@ public class MainWindowViewModel : ViewModelBase
 
     public void SelectUser(SteamUser user)
     {
-        SteamManager.Instance.CurrentUser = user;
+        m_steamManager.CurrentUser = user;
         IsSMAPIEnabled = CheckIsSMAPIEnabled();
     }
 
-    public void LaunchStardew() => SteamManager.Instance.LaunchSteamGame(StardewValleyAppId);
+    public void LaunchStardew() => m_steamManager.LaunchSteamGame(StardewValleyAppId);
 
     public void ToggleSMAPIEnabled()
     {
         var isEnabled = CheckIsSMAPIEnabled();
 
-        SteamManager.Instance.SafeCloseSteam();
+        m_steamManager.CloseSteam();
 
         if (isEnabled)
         {
-            SteamManager.Instance.SetLaunchOptions(StardewValleyAppId, "");
+            m_steamManager.SetLaunchOptions(StardewValleyAppId, "");
         }
         else
         {
-            SteamManager.Instance.SetLaunchOptions(StardewValleyAppId, GetStardewLaunchOptions());
+            m_steamManager.SetLaunchOptions(StardewValleyAppId, GetStardewLaunchOptions());
         }
     }
 
@@ -181,7 +183,7 @@ public class MainWindowViewModel : ViewModelBase
 
     private bool CheckIsSMAPIEnabled()
     {
-        var launchOptions = SteamManager.Instance.GetLaunchOptions(StardewValleyAppId);
+        var launchOptions = m_steamManager.GetLaunchOptions(StardewValleyAppId);
 
         return launchOptions == GetStardewLaunchOptions();
     }

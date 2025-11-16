@@ -2,10 +2,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:viewModels1="clr-namespace:StardewModManager.AvaloniaImpl.ViewModels"
+        xmlns:main="clr-namespace:StardewModManager.AvaloniaImpl.Views.Main"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="StardewModManager.AvaloniaImpl.Views.MainWindow"
-        x:DataType="viewModels1:MainWindowViewModel"
+        x:Class="StardewModManager.AvaloniaImpl.Views.Main.MainWindow"
+        x:DataType="main:MainWindowViewModel"
         Icon="/Assets/stardew_mod_manager_icon.ico"
         Title="Stardew Mod Manager"
         CanResize="False"
@@ -17,7 +17,7 @@
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
              to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <viewModels1:MainWindowViewModel />
+        <main:MainWindowViewModel />
     </Design.DataContext>
 
     <StackPanel Spacing="8" Margin="8">

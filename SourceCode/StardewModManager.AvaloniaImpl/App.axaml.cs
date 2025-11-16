@@ -3,8 +3,8 @@ namespace StardewModManager.AvaloniaImpl;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using ViewModels;
-using Views;
+using Splat;
+using Views.Main;
 
 public partial class App : Application
 {
@@ -19,7 +19,7 @@ public partial class App : Application
         {
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainWindowViewModel(),
+                DataContext = Locator.Current.GetService<MainWindowViewModel>(),
             };
         }
 
