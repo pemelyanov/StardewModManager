@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Reactive.Subjects;
 using BigHelp.Http;
 using Configuration;
+using Constants;
 using Data;
 using GitHubManager;
 using NLog;
@@ -17,6 +18,8 @@ public class SMAPIModManager : IModManger
     private readonly        GitHubRepositoryManager m_gitHubRepositoryManager = new("Pathoschild", "SMAPI");
     private readonly        ISteamManager m_steamManager;
     private readonly        IConfigurationService<ModManagerConfig> m_configurationService;
+    private const           string ModsFolder = "Mods";
+    private const           string DisabledModsFolder = "DisabledMods";
 
     public SMAPIModManager(ISteamManager steamManager, IConfigurationService<ModManagerConfig> configurationService)
     {
@@ -24,9 +27,22 @@ public class SMAPIModManager : IModManger
         m_configurationService = configurationService;
 
         StardewPath = ResolveStardewPath();
+
+        IsInstalled = CheckIsSMAPIInstalled();
+        IsEnabled = CheckIsSMAPIEnabled();
+
+        UpdateModsList();
+        
+        steamManager.CurrentUserChanged += SteamManagerOn_CurrentUserChanged;
     }
 
     public string StardewPath { get; private set; }
+
+    public bool IsEnabled { get; private set; }
+
+    public bool IsInstalled { get; private set; }
+
+    public IReadOnlyList<Mod> Mods { get; private set; } = [];
 
     public async Task InstallLatestAsync(IObserver<LoadingProgress>? observer)
     {
@@ -70,7 +86,7 @@ public class SMAPIModManager : IModManger
                     }
                 )
             );
-            
+
             s_logger.Info("Extracting SMAPI installer...");
             var extractStage = new LoadingProgress
             {
@@ -81,7 +97,7 @@ public class SMAPIModManager : IModManger
 
             string extractPath = await ExtractInstallerAsync(assetDownloadPath, observer);
             tempPaths.Add(extractPath);
-            
+
             s_logger.Info("Installing SMAPI...");
             var installStage = new LoadingProgress
             {
@@ -92,7 +108,16 @@ public class SMAPIModManager : IModManger
 
             await InstallSMAPIAsync(extractPath, StardewPath);
 
-            s_logger.Info("SMAPI installation completed successfully!");
+            IsInstalled = CheckIsSMAPIInstalled();
+
+            if (IsInstalled)
+            {
+                s_logger.Info("SMAPI installation completed successfully!");
+            }
+            else
+            {
+                s_logger.Warn("Something went wrong, installation completed, but SMAPI not installed");
+            }
         }
         finally
         {
@@ -110,7 +135,127 @@ public class SMAPIModManager : IModManger
         );
 
         StardewPath = ResolveStardewPath();
+
+        IsInstalled = CheckIsSMAPIInstalled();
     }
+
+    public void ToggleIsEnabled()
+    {
+        m_steamManager.CloseSteam();
+
+        var launchOptions = IsEnabled ? "" : GetStardewLaunchOptions();
+
+        m_steamManager.SetLaunchOptions(SteamAppIds.StardewValley, launchOptions);
+
+        IsEnabled = !IsEnabled;
+    }
+
+    public async Task ExportToModPackAsync(string path)
+    {
+        if (File.Exists(path)) File.Delete(path);
+
+        var modsPath = GetModsFolderPath();
+
+        await ZipFile.CreateFromDirectoryAsync(modsPath, path);
+    }
+
+    public async Task InstallModPackAsync(string path)
+    {
+        var modsPath = GetModsFolderPath();
+        var disabledModsPath = GetDisabledModsFolderPath();
+
+        ClearFolderOrCreateNew(modsPath);
+        ClearFolderOrCreateNew(disabledModsPath);
+
+        await ZipFile.ExtractToDirectoryAsync(path, modsPath);
+
+        UpdateModsList();
+    }
+
+    public void ToggleMod(Mod mod)
+    {
+        var disabledMods = GetDisabledModsFolderPath();
+        var mods = GetModsFolderPath();
+
+        if (!Directory.Exists(disabledMods)) Directory.CreateDirectory(disabledMods);
+        if (!Directory.Exists(mods)) Directory.CreateDirectory(mods);
+
+        if (mod.IsEnabled)
+            Directory.Move(Path.Combine(disabledMods, mod.Name), Path.Combine(mods, mod.Name));
+        else
+            Directory.Move(Path.Combine(mods, mod.Name), Path.Combine(disabledMods, mod.Name));
+    }
+
+    private string GetModsFolderPath() => Path.Combine(StardewPath, ModsFolder);
+
+    private string GetDisabledModsFolderPath() => Path.Combine(StardewPath, DisabledModsFolder);
+
+    private void ClearFolderOrCreateNew(string folderPath)
+    {
+        if (Directory.Exists(folderPath))
+        {
+            var dirs = Directory.GetDirectories(folderPath);
+            foreach (var folder in dirs)
+                Directory.Delete(folder, true);
+
+            var files = Directory.GetFiles(folderPath);
+            foreach (var file in files)
+                File.Delete(file);
+
+            return;
+        }
+
+        Directory.CreateDirectory(folderPath);
+    }
+
+    private void UpdateModsList()
+    {
+        var modsFolder = GetModsFolderPath();
+        var disabledModsFolder = GetDisabledModsFolderPath();
+
+        IEnumerable<Mod> mods = [];
+
+        if (Directory.Exists(modsFolder))
+        {
+            var enabledMods = Directory.GetDirectories(modsFolder)
+                .Select(
+                    it => new Mod(Path.GetFileName(it))
+                    {
+                        IsEnabled = true
+                    }
+                );
+
+            mods = mods.Concat(enabledMods);
+        }
+
+        if (Directory.Exists(disabledModsFolder))
+        {
+            var disabledMods = Directory.GetDirectories(disabledModsFolder)
+                .Select(
+                    it => new Mod(Path.GetFileName(it))
+                    {
+                        IsEnabled = false
+                    }
+                );
+
+            mods = mods.Concat(disabledMods);
+        }
+
+        Mods = mods.OrderBy(it => it.Name).ToArray();
+    }
+
+    private bool CheckIsSMAPIInstalled() => File.Exists(GetSMAPIPath());
+
+    private bool CheckIsSMAPIEnabled()
+    {
+        var launchOptions = m_steamManager.GetLaunchOptions(SteamAppIds.StardewValley);
+
+        return launchOptions == GetStardewLaunchOptions();
+    }
+
+    private string GetSMAPIPath() => Path.Combine(StardewPath, "StardewModdingAPI.exe");
+
+    private string GetStardewLaunchOptions() => $@"""{GetSMAPIPath()}"" %command%";
 
     private string ResolveStardewPath() => m_configurationService.Config.CustomStardewPath ?? GetDefaultStardewPath();
 
@@ -142,7 +287,7 @@ public class SMAPIModManager : IModManger
                     try
                     {
                         string fullPath = Path.Combine(tempExtractPath, entry.FullName);
-                        
+
                         if (string.IsNullOrEmpty(entry.Name))
                         {
                             Directory.CreateDirectory(fullPath);
@@ -278,5 +423,10 @@ public class SMAPIModManager : IModManger
                 s_logger.Warn(ex, "Failed to clean up temporary files");
             }
         }
+    }
+
+    private void SteamManagerOn_CurrentUserChanged(object? sender, SteamUser e)
+    {
+        IsEnabled = CheckIsSMAPIEnabled();
     }
 }

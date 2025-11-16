@@ -4,6 +4,8 @@ using Data;
 
 public interface ISteamManager
 {
+    public event EventHandler<SteamUser> CurrentUserChanged;
+    
     public string SteamPath { get; }
     
     public SteamUser? CurrentUser { get; set; }

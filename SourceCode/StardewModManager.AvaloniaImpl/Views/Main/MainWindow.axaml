@@ -38,7 +38,7 @@
         </Grid>
 
         <Grid ColumnDefinitions="* Auto" ColumnSpacing="8">
-            <TextBox Watermark="Путь до Stardew Valley" UseFloatingWatermark="True" Text="{Binding StardewPath}" />
+            <TextBox Watermark="Путь до Stardew Valley" UseFloatingWatermark="True" Text="{Binding StardewPath}" IsReadOnly="True" />
 
             <Button Grid.Column="1" Content="Выбрать" VerticalAlignment="Bottom"
                     Command="{Binding SelectStardewPathAsync}" />
@@ -94,7 +94,7 @@
         </ScrollViewer>
 
         <Button Content="Экспортировать сборку" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                Command="{Binding ExportModPack}" IsEnabled="{Binding Mods.Count}" />
+                Command="{Binding ExportModPackAsync}" IsEnabled="{Binding Mods.Count}" />
 
         <Separator HorizontalAlignment="Stretch" />
 

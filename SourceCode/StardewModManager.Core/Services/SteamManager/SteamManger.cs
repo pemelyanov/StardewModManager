@@ -16,11 +16,24 @@ public class SteamManger : ISteamManager
     {
         m_configurationService = configurationService;
         SteamPath = ResolveSteamPath();
+        CurrentUser = GetLocalUsersList().FirstOrDefault();
         s_logger.Info("SteamManager initialized with path: {SteamPath}", SteamPath);
     }
 
+    public event EventHandler<SteamUser>? CurrentUserChanged;
+
     public string SteamPath { get; private set; }
-    public SteamUser? CurrentUser { get; set; }
+
+    public SteamUser? CurrentUser
+    {
+        get;
+        set
+        {
+            field = value;
+            if (value is not null)
+                CurrentUserChanged?.Invoke(this, value!);
+        }
+    }
 
     public void SetCustomSteamPath(string? path)
     {
