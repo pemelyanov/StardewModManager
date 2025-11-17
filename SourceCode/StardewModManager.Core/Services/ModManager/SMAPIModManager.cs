@@ -35,6 +35,7 @@ public class SMAPIModManager : IModManger
 
         m_isSMAPIInstalled = new BehaviorSubject<bool>(isInstalled);
         m_isSMAPIEnabled = new BehaviorSubject<bool>(isEnabled);
+        RecentModPacks = configurationService.Config.RecentModPacks;
 
         UpdateModsList();
 
@@ -48,6 +49,8 @@ public class SMAPIModManager : IModManger
     public IObservable<bool> IsInstalled => m_isSMAPIInstalled;
 
     public IReadOnlyList<Mod> Mods { get; private set; } = [];
+
+    public IReadOnlyList<ModPackInfo> RecentModPacks { get; private set; }
 
     public async Task InstallLatestAsync(IObserver<LoadingProgress>? observer)
     {
@@ -118,8 +121,8 @@ public class SMAPIModManager : IModManger
             if (m_isSMAPIInstalled.Value)
             {
                 s_logger.Info("SMAPI installation completed successfully!");
-                
-                if(!m_isSMAPIEnabled.Value)
+
+                if (!m_isSMAPIEnabled.Value)
                     ToggleIsEnabled();
             }
             else
@@ -158,16 +161,18 @@ public class SMAPIModManager : IModManger
         m_isSMAPIEnabled.OnNext(!m_isSMAPIEnabled.Value);
     }
 
-    public async Task ExportToModPackAsync(string path)
+    public Task ExportToModPackAsync(string path)
     {
         if (File.Exists(path)) File.Delete(path);
 
         var modsPath = GetModsFolderPath();
-
-        await ZipFile.CreateFromDirectoryAsync(modsPath, path);
+        
+        ZipFile.CreateFromDirectory(modsPath, path);
+        
+        return Task.CompletedTask;
     }
 
-    public async Task InstallModPackAsync(string path)
+    public Task InstallModPackAsync(string path)
     {
         var modsPath = GetModsFolderPath();
         var disabledModsPath = GetDisabledModsFolderPath();
@@ -175,9 +180,13 @@ public class SMAPIModManager : IModManger
         ClearFolderOrCreateNew(modsPath);
         ClearFolderOrCreateNew(disabledModsPath);
 
-        await ZipFile.ExtractToDirectoryAsync(path, modsPath);
+        ZipFile.ExtractToDirectory(path, modsPath);
 
         UpdateModsList();
+
+        InvalidateRecentModPacks(path);
+        
+        return Task.CompletedTask;
     }
 
     public void ToggleMod(Mod mod)
@@ -192,6 +201,18 @@ public class SMAPIModManager : IModManger
             Directory.Move(Path.Combine(disabledMods, mod.Name), Path.Combine(mods, mod.Name));
         else
             Directory.Move(Path.Combine(mods, mod.Name), Path.Combine(disabledMods, mod.Name));
+    }
+
+    public void DeleteRecentMod(ModPackInfo modPackInfo)
+    {
+        m_configurationService.UpdateConfig(
+            m_configurationService.Config with
+            {
+                RecentModPacks = m_configurationService.Config.RecentModPacks.Where(it => it != modPackInfo).ToArray()
+            }
+        );
+
+        RecentModPacks = m_configurationService.Config.RecentModPacks;
     }
 
     private string GetModsFolderPath() => Path.Combine(StardewPath, ModsFolder);
@@ -214,6 +235,29 @@ public class SMAPIModManager : IModManger
         }
 
         Directory.CreateDirectory(folderPath);
+    }
+
+    private void InvalidateRecentModPacks(string path)
+    {
+        var recentPacks = m_configurationService.Config.RecentModPacks.ToList();
+        recentPacks.RemoveAll(it => it.Path == path);
+
+        var pack = new ModPackInfo
+        {
+            Path = path,
+            LastInstallTime = DateTime.Now
+        };
+
+        recentPacks.Add(pack);
+
+        m_configurationService.UpdateConfig(
+            m_configurationService.Config with
+            {
+                RecentModPacks = recentPacks.OrderByDescending(it => it.LastInstallTime).ToArray()
+            }
+        );
+
+        RecentModPacks = m_configurationService.Config.RecentModPacks;
     }
 
     private void UpdateModsList()

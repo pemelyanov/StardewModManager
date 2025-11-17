@@ -8,6 +8,7 @@ using Core.Services.SteamManager;
 using FanatikiLauncher.MVVM.ViewModels;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
+using ViewModels;
 
 public class ModsPageViewModel : ViewModelBase, IRoutableViewModel
 {
@@ -21,6 +22,7 @@ public class ModsPageViewModel : ViewModelBase, IRoutableViewModel
         m_modManger = modManger;
         m_steamManager = steamManager;
         
+        UpdateRecentModPacksList();
         UpdateModsList();
     }
 
@@ -38,6 +40,9 @@ public class ModsPageViewModel : ViewModelBase, IRoutableViewModel
 
     [Reactive]
     public IReadOnlyList<Mod> Mods { get; private set; } = [];
+    
+    [Reactive]
+    public IReadOnlyList<RecentModPackViewModel> RecentModPacks { get; private set; } = [];
 
     [Reactive]
     public IObservable<LoadingProgress>? SMAPIInstallationProgress { get; private set; }
@@ -84,8 +89,14 @@ public class ModsPageViewModel : ViewModelBase, IRoutableViewModel
 
         if (packPath is null) return;
 
+        await InstallModPackByPathAsync(packPath);
+    }
+
+    public async Task InstallModPackByPathAsync(string packPath)
+    {
         await m_modManger.InstallModPackAsync(packPath);
 
+        UpdateRecentModPacksList();
         UpdateModsList();
     }
 
@@ -94,8 +105,20 @@ public class ModsPageViewModel : ViewModelBase, IRoutableViewModel
         m_modManger.ToggleMod(mod);
     }
 
+    public void DeleteRecentModPack(RecentModPackViewModel viewModel)
+    {
+        m_modManger.DeleteRecentMod(viewModel.Info);
+        
+        UpdateRecentModPacksList();
+    }
+
     private void UpdateModsList()
     {
         Mods = m_modManger.Mods;
+    }
+
+    private void UpdateRecentModPacksList()
+    {
+        RecentModPacks = m_modManger.RecentModPacks.Select(it => new RecentModPackViewModel(it)).ToArray();
     }
 }

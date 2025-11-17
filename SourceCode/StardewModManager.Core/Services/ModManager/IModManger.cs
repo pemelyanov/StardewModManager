@@ -10,7 +10,11 @@ public interface IModManger
     
     IObservable<bool>  IsInstalled { get; }
     
+    // TODO: Сделать реактивным
     IReadOnlyList<Mod> Mods { get; }
+    
+    // TODO: Сделать реактивным
+    IReadOnlyList<ModPackInfo> RecentModPacks { get; }
     
     Task InstallLatestAsync(IObserver<LoadingProgress>? observer);
 
@@ -23,4 +27,6 @@ public interface IModManger
     Task InstallModPackAsync(string path);
 
     void ToggleMod(Mod mod);
+
+    void DeleteRecentMod(ModPackInfo modPackInfo);
 }
