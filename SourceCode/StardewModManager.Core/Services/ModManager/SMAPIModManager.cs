@@ -174,6 +174,13 @@ public class SMAPIModManager : IModManger
 
     public Task InstallModPackAsync(string path)
     {
+        if (File.Exists(path))
+        {
+            s_logger.Warn("Mod pack not found: {path}", path);
+            
+            return Task.CompletedTask;
+        }
+        
         var modsPath = GetModsFolderPath();
         var disabledModsPath = GetDisabledModsFolderPath();
 

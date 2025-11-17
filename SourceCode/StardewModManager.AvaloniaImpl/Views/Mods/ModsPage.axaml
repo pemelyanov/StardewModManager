@@ -20,6 +20,10 @@
             <Setter Property="BackgroundSizing" Value="InnerBorderEdge" />
             <Setter Property="Padding" Value="16" />
         </Style>
+        
+        <Style Selector=":is(Control).unavailable">
+            <Setter Property="Opacity" Value="0.2" />
+        </Style>
     </UserControl.Styles>
     <Grid RowDefinitions="Auto *" Margin="8" RowSpacing="8">
         <StackPanel Grid.Row="0" Spacing="8">
@@ -85,7 +89,7 @@
             </Panel>
 
             <StackPanel IsVisible="{Binding RecentModPacks.Count}" Spacing="8">
-                <TextBlock Text="Ранее установленные сборки:" />
+                <TextBlock Text="Устанавливаемые ранее сборки:" />
 
                 <ScrollViewer HorizontalScrollBarVisibility="Auto">
                     <ItemsControl ItemsSource="{Binding RecentModPacks}">
@@ -99,7 +103,8 @@
                             <DataTemplate>
                                 <Border Classes="card" Padding="8">
                                     <Grid ColumnDefinitions="* Auto" ColumnSpacing="16">
-                                        <StackPanel Spacing="4">
+                                        <StackPanel Spacing="4" ToolTip.Tip="{Binding Info.Path}"
+                                                    Classes.unavailable="{Binding !IsExists}">
                                             <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
                                             <TextBlock Theme="{DynamicResource CaptionTextBlockStyle}"
                                                        Text="{Binding Info.LastInstallTime}"
@@ -111,7 +116,7 @@
                                                 Content="{markupExtensions:SymbolIcon Symbol=MoreVertical}">
                                             <Button.Flyout>
                                                 <MenuFlyout>
-                                                    <MenuItem
+                                                    <MenuItem IsEnabled="{Binding IsExists}"
                                                         Command="{Binding #Root.ViewModel.InstallModPackByPathAsync}"
                                                         CommandParameter="{Binding Info.Path}">
                                                         <MenuItem.Header>
