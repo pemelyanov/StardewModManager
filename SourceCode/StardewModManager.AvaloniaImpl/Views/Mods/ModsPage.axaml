@@ -3,14 +3,13 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:mods="clr-namespace:StardewModManager.AvaloniaImpl.Views.Mods"
+             xmlns:fluent="clr-namespace:FluentIcons.Avalonia.Fluent;assembly=FluentIcons.Avalonia.Fluent"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="StardewModManager.AvaloniaImpl.Views.Mods.ModsPage"
              x:DataType="mods:ModsPageViewModel"
              x:Name="Root">
-    <Grid RowDefinitions="Auto * Auto" Margin="8" RowSpacing="8">
+    <Grid RowDefinitions="Auto *" Margin="8" RowSpacing="8">
         <StackPanel Grid.Row="0" Spacing="8">
-            <Separator HorizontalAlignment="Stretch" />
-
             <Grid RowDefinitions="Auto Auto Auto" ColumnDefinitions="* Auto"
                   IsVisible="{Binding !IsSMAPIInstalled^}">
                 <TextBlock Text="Загрузчик модов не установлен" Foreground="IndianRed"
@@ -26,7 +25,7 @@
                     <ProgressBar IsIndeterminate="True" />
                 </StackPanel>
             </Grid>
-
+            
             <Grid ColumnDefinitions="* Auto" IsVisible="{Binding IsSMAPIInstalled^}">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="Загрузчик модов (SMAPI): " />
@@ -38,17 +37,42 @@
                               IsChecked="{Binding IsSMAPIEnabled^}"
                               Command="{Binding ToggleSMAPIEnabled}" />
             </Grid>
-
+            
             <TextBlock
                 Text="ВНИМАНИЕ! При изменении этого параметра процесс Steam будет принудительно закрыт!"
                 TextWrapping="Wrap" Foreground="Gold" />
 
             <Separator HorizontalAlignment="Stretch" />
-
-            <Button Content="Установить сборку" HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Center"
-                    Command="{Binding InstallModPackAsync}" />
-
+            
+            <Panel>
+                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Spacing="8">
+                    <Button HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            Command="{Binding InstallModPackAsync}"
+                            Classes="accent">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <fluent:SymbolIcon Symbol="ArrowDownload" />
+                            <TextBlock Text="Установить сборку" />
+                        </StackPanel>
+                    </Button>
+                    
+                    <Button HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            Command="{Binding ExportModPackAsync}" IsEnabled="{Binding Mods.Count}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <fluent:SymbolIcon Symbol="ArrowUpload" />
+                            <TextBlock Text="Экспортировать сборку" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+                
+                <Button Classes="accent" Content="Запустить Stardew" HorizontalAlignment="Right"
+                        HorizontalContentAlignment="Center"
+                        Command="{Binding LaunchStardew}" />
+            </Panel>
+            
+            <Separator HorizontalAlignment="Stretch" />
+            
             <TextBlock Text="{Binding Mods.Count, StringFormat='Установленные моды ({0}):'}"
                        IsVisible="{Binding Mods.Count}" />
         </StackPanel>
@@ -64,17 +88,5 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
-
-        <StackPanel Grid.Row="2" Spacing="8">
-            <Button Content="Экспортировать сборку" HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Center"
-                    Command="{Binding ExportModPackAsync}" IsEnabled="{Binding Mods.Count}" />
-
-            <Separator HorizontalAlignment="Stretch" />
-
-            <Button Classes="accent" Content="Запустить Stardew" HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Center"
-                    Command="{Binding LaunchStardew}" />
-        </StackPanel>
     </Grid>
 </UserControl>
