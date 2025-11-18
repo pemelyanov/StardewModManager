@@ -166,21 +166,21 @@ public class SMAPIModManager : IModManger
         if (File.Exists(path)) File.Delete(path);
 
         var modsPath = GetModsFolderPath();
-        
+
         ZipFile.CreateFromDirectory(modsPath, path);
-        
+
         return Task.CompletedTask;
     }
 
     public Task InstallModPackAsync(string path)
     {
-        if (File.Exists(path))
+        if (!File.Exists(path))
         {
             s_logger.Warn("Mod pack not found: {path}", path);
-            
+
             return Task.CompletedTask;
         }
-        
+
         var modsPath = GetModsFolderPath();
         var disabledModsPath = GetDisabledModsFolderPath();
 
@@ -192,7 +192,7 @@ public class SMAPIModManager : IModManger
         UpdateModsList();
 
         InvalidateRecentModPacks(path);
-        
+
         return Task.CompletedTask;
     }
 
@@ -210,7 +210,7 @@ public class SMAPIModManager : IModManger
             Directory.Move(Path.Combine(mods, mod.Name), Path.Combine(disabledMods, mod.Name));
     }
 
-    public void DeleteRecentMod(ModPackInfo modPackInfo)
+    public void DeleteRecentModPack(ModPackInfo modPackInfo)
     {
         m_configurationService.UpdateConfig(
             m_configurationService.Config with
@@ -220,6 +220,39 @@ public class SMAPIModManager : IModManger
         );
 
         RecentModPacks = m_configurationService.Config.RecentModPacks;
+    }
+
+    public Task InstallModAsync(string path)
+    {
+        if (string.IsNullOrEmpty(path) || !File.Exists(path))
+        {
+            s_logger.Warn("Mod not found {path}", path);
+
+            return Task.CompletedTask;
+        }
+
+        var modsPath = GetModsFolderPath();
+
+        if (!Directory.Exists(modsPath)) Directory.CreateDirectory(modsPath);
+
+        ZipFile.ExtractToDirectory(path, modsPath, true);
+
+        UpdateModsList();
+
+        return Task.CompletedTask;
+    }
+
+    public void DeleteMod(Mod mod)
+    {
+        var modsPath = mod.IsEnabled ? GetModsFolderPath() : GetDisabledModsFolderPath();
+
+        var modPath = Path.Combine(modsPath, mod.Name);
+
+        if (!Directory.Exists(modPath)) return;
+
+        Directory.Delete(modPath, true);
+
+        Mods = Mods.Where(it => it != mod).ToArray();
     }
 
     private string GetModsFolderPath() => Path.Combine(StardewPath, ModsFolder);

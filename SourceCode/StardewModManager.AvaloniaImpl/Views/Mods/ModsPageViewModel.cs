@@ -42,9 +42,11 @@ public class ModsPageViewModel : ViewModelBase, IRoutableViewModel
 
     public IObservable<bool> IsSMAPIEnabled => m_modManger.IsEnabled;
 
-    public Func<Task<string?>>? OpenModPackAction { get; set; }
+    public Func<Task<string?>>? OpenArchiveAction { get; set; }
 
     public Func<Task<string?>>? SaveModPackAction { get; set; }
+
+    public bool ShouldConfirmModDeletion { get; set; } = true;
 
     [Reactive]
     public IReadOnlyList<Mod> Mods { get; private set; } = [];
@@ -54,6 +56,48 @@ public class ModsPageViewModel : ViewModelBase, IRoutableViewModel
 
     [Reactive]
     public IObservable<LoadingProgress>? SMAPIInstallationProgress { get; private set; }
+
+    public async Task DeleteAllMods()
+    {
+        if (!await m_dialogService.ConfirmAsync(
+            "Вы уверены что хотите удалить все моды?",
+            "Удаление модов",
+            "Да",
+            "Отмена"
+        )) return;
+
+        foreach (var mod in Mods)
+            m_modManger.DeleteMod(mod);
+
+        UpdateModsList();
+    }
+
+    public async Task InstallModAsync()
+    {
+        if (OpenArchiveAction is null) return;
+
+        var modPath = await OpenArchiveAction.Invoke();
+
+        if (modPath is null) return;
+
+        await m_modManger.InstallModAsync(modPath);
+
+        UpdateModsList();
+    }
+
+    public async Task DeleteModAsync(Mod mod)
+    {
+        if (ShouldConfirmModDeletion && !await m_dialogService.ConfirmAsync(
+            $"Вы уверены что хотите удалить мод {mod.Name}?",
+            "Удаление мода",
+            "Да",
+            "Отмена"
+        )) return;
+
+        m_modManger.DeleteMod(mod);
+
+        UpdateModsList();
+    }
 
     public async Task ExportModPackAsync()
     {
@@ -91,20 +135,20 @@ public class ModsPageViewModel : ViewModelBase, IRoutableViewModel
 
     public async Task InstallModPackAsync()
     {
-        if (OpenModPackAction is null) return;
+        if (OpenArchiveAction is null) return;
 
-        if (await ConfirmModPackInstallationIfNeeded()) return;
+        if (!await ConfirmModPackInstallationIfNeeded()) return;
 
-        var packPath = await OpenModPackAction.Invoke();
+        var packPath = await OpenArchiveAction.Invoke();
 
         if (packPath is null) return;
 
-        await InstallModPackByPathWithConfirmationAsync(packPath);
+        await InstallModPackByPathWithAsync(packPath);
     }
 
     public async Task InstallModPackByPathWithConfirmationAsync(string packPath)
     {
-        if (await ConfirmModPackInstallationIfNeeded()) return;
+        if (!await ConfirmModPackInstallationIfNeeded()) return;
 
         await InstallModPackByPathWithAsync(packPath);
     }
@@ -116,7 +160,7 @@ public class ModsPageViewModel : ViewModelBase, IRoutableViewModel
 
     public void DeleteRecentModPack(RecentModPackViewModel viewModel)
     {
-        m_modManger.DeleteRecentMod(viewModel.Info);
+        m_modManger.DeleteRecentModPack(viewModel.Info);
 
         UpdateRecentModPacksList();
     }
@@ -144,7 +188,8 @@ public class ModsPageViewModel : ViewModelBase, IRoutableViewModel
         if (Mods.Count > 0 && !await m_dialogService.ConfirmAsync(
             "Все текущие моды будут удалены. Вы уверены?",
             "Установка сборки"
-        )) return true;
-        return false;
+        )) return false;
+
+        return true;
     }
 }

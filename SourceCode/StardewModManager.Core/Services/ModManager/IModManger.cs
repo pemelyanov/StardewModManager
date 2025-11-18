@@ -28,5 +28,9 @@ public interface IModManger
 
     void ToggleMod(Mod mod);
 
-    void DeleteRecentMod(ModPackInfo modPackInfo);
+    void DeleteRecentModPack(ModPackInfo modPackInfo);
+
+    Task InstallModAsync(string path);
+    
+    void DeleteMod(Mod mod);
 }
