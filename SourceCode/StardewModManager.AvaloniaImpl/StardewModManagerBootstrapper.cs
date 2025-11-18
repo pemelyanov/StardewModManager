@@ -2,6 +2,7 @@
 
 using Autofac;
 using Core.Services.Configuration;
+using Core.Services.Dialog;
 using Core.Services.ModManager;
 using Core.Services.SteamManager;
 using FanatikiLauncher.MVVM;
@@ -21,6 +22,7 @@ public class StardewModManagerBootstrapper : BootstrapperBase<StardewModManagerB
 
     protected override void RegisterServices(ContainerBuilder builder)
     {
+        builder.RegisterType<MainWindow>().AsSelf().As<IDialogService>().SingleInstance();
         builder.RegisterType<SMAPIModManager>().As<IModManger>().SingleInstance();
         builder.RegisterType<SteamManger>().As<ISteamManager>().SingleInstance();
         builder.RegisterType<JsonModManagerConfigurationService>().AsImplementedInterfaces().SingleInstance();

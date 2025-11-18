@@ -117,7 +117,7 @@
                                             <Button.Flyout>
                                                 <MenuFlyout>
                                                     <MenuItem IsEnabled="{Binding IsExists}"
-                                                        Command="{Binding #Root.ViewModel.InstallModPackByPathAsync}"
+                                                        Command="{Binding #Root.ViewModel.InstallModPackByPathWithConfirmationAsync}"
                                                         CommandParameter="{Binding Info.Path}">
                                                         <MenuItem.Header>
                                                             <StackPanel Orientation="Horizontal" Spacing="8">

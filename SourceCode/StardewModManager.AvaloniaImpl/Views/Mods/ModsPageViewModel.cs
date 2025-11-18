@@ -3,6 +3,7 @@
 using System.Reactive.Subjects;
 using Core.Constants;
 using Core.Data;
+using Core.Services.Dialog;
 using Core.Services.ModManager;
 using Core.Services.SteamManager;
 using FanatikiLauncher.MVVM.ViewModels;
@@ -12,16 +13,23 @@ using ViewModels;
 
 public class ModsPageViewModel : ViewModelBase, IRoutableViewModel
 {
-    private readonly Lazy<IScreen> m_hostScreen;
-    private readonly IModManger    m_modManger;
-    private readonly ISteamManager m_steamManager;
+    private readonly Lazy<IScreen>  m_hostScreen;
+    private readonly IModManger     m_modManger;
+    private readonly ISteamManager  m_steamManager;
+    private readonly IDialogService m_dialogService;
 
-    public ModsPageViewModel(Lazy<IScreen> hostScreen, IModManger modManger, ISteamManager steamManager)
+    public ModsPageViewModel(
+        Lazy<IScreen> hostScreen,
+        IModManger modManger,
+        ISteamManager steamManager,
+        IDialogService dialogService
+    )
     {
         m_hostScreen = hostScreen;
         m_modManger = modManger;
         m_steamManager = steamManager;
-        
+        m_dialogService = dialogService;
+
         UpdateRecentModPacksList();
         UpdateModsList();
     }
@@ -40,7 +48,7 @@ public class ModsPageViewModel : ViewModelBase, IRoutableViewModel
 
     [Reactive]
     public IReadOnlyList<Mod> Mods { get; private set; } = [];
-    
+
     [Reactive]
     public IReadOnlyList<RecentModPackViewModel> RecentModPacks { get; private set; } = [];
 
@@ -85,19 +93,20 @@ public class ModsPageViewModel : ViewModelBase, IRoutableViewModel
     {
         if (OpenModPackAction is null) return;
 
+        if (await ConfirmModPackInstallationIfNeeded()) return;
+
         var packPath = await OpenModPackAction.Invoke();
 
         if (packPath is null) return;
 
-        await InstallModPackByPathAsync(packPath);
+        await InstallModPackByPathWithConfirmationAsync(packPath);
     }
 
-    public async Task InstallModPackByPathAsync(string packPath)
+    public async Task InstallModPackByPathWithConfirmationAsync(string packPath)
     {
-        await m_modManger.InstallModPackAsync(packPath);
+        if (await ConfirmModPackInstallationIfNeeded()) return;
 
-        UpdateRecentModPacksList();
-        UpdateModsList();
+        await InstallModPackByPathWithAsync(packPath);
     }
 
     public void ToggleMod(Mod mod)
@@ -108,8 +117,16 @@ public class ModsPageViewModel : ViewModelBase, IRoutableViewModel
     public void DeleteRecentModPack(RecentModPackViewModel viewModel)
     {
         m_modManger.DeleteRecentMod(viewModel.Info);
-        
+
         UpdateRecentModPacksList();
+    }
+
+    private async Task InstallModPackByPathWithAsync(string packPath)
+    {
+        await m_modManger.InstallModPackAsync(packPath);
+
+        UpdateRecentModPacksList();
+        UpdateModsList();
     }
 
     private void UpdateModsList()
@@ -120,5 +137,14 @@ public class ModsPageViewModel : ViewModelBase, IRoutableViewModel
     private void UpdateRecentModPacksList()
     {
         RecentModPacks = m_modManger.RecentModPacks.Select(it => new RecentModPackViewModel(it)).ToArray();
+    }
+
+    private async Task<bool> ConfirmModPackInstallationIfNeeded()
+    {
+        if (Mods.Count > 0 && !await m_dialogService.ConfirmAsync(
+            "Все текущие моды будут удалены. Вы уверены?",
+            "Установка сборки"
+        )) return true;
+        return false;
     }
 }
