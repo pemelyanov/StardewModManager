@@ -2,6 +2,8 @@
 
 public record ModManagerConfig
 {
+    public string? LastSelectedUserId { get; init; }
+    
     public string? CustomSteamPath { get; init; }
     
     public string? CustomStardewPath { get; init; }

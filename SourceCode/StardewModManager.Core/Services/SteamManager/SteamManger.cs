@@ -16,7 +16,9 @@ public class SteamManger : ISteamManager
     {
         m_configurationService = configurationService;
         SteamPath = ResolveSteamPath();
-        CurrentUser = GetLocalUsersList().FirstOrDefault();
+        var localUsers = GetLocalUsersList();
+        CurrentUser = localUsers.FirstOrDefault(it => it.Id == m_configurationService.Config.LastSelectedUserId)
+            ?? localUsers.FirstOrDefault();
         s_logger.Info("SteamManager initialized with path: {SteamPath}", SteamPath);
         if (!Directory.Exists(SteamPath))
             s_logger.Warn("Setted steam directory not exists");
@@ -34,6 +36,13 @@ public class SteamManger : ISteamManager
             field = value;
             if (value is not null)
                 CurrentUserChanged?.Invoke(this, value);
+
+            m_configurationService.UpdateConfig(
+                m_configurationService.Config with
+                {
+                    LastSelectedUserId = value?.Id
+                }
+            );
 
             s_logger.Info("Selected user changed: {value}", value);
         }
@@ -316,7 +325,7 @@ public class SteamManger : ISteamManager
                 s_logger.Warn("Software entry not found for app: {AppId}", appId);
                 return null;
             }
-            
+
             var gameEntry = FindEntry(softwareEntry, appId) as IDictionary<string, object>;
 
             if (gameEntry is null)
@@ -360,7 +369,7 @@ public class SteamManger : ISteamManager
                 s_logger.Warn("Software entry not found for app: {AppId}", appId);
                 return null;
             }
-            
+
             var gameEntry = FindEntry(softwareEntry, appId) as IDictionary<string, object>;
 
             if (gameEntry is null)
@@ -395,12 +404,11 @@ public class SteamManger : ISteamManager
 
         foreach (var subContent in content)
         {
-            if(subContent.Value is not IDictionary<string, object> cc) continue;
-            
+            if (subContent.Value is not IDictionary<string, object> cc) continue;
+
             if (FindEntry(cc, key) is { } foundedEntry)
                 return foundedEntry;
         }
-            
 
         s_logger.Trace("Entry not found for key: {Key}", key);
         return null;

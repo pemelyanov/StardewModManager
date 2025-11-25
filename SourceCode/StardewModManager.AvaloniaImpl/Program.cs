@@ -25,11 +25,18 @@ sealed class Program
         RxApp.MainThreadScheduler = AvaloniaScheduler.Instance;
         
         s_logger.Info("Starting app...");
-        
-        BuildAvaloniaApp()
-            .StartWithClassicDesktopLifetime(args);
-        
-        s_logger.Info("App shutted down");
+
+        try
+        {
+            BuildAvaloniaApp()
+                .StartWithClassicDesktopLifetime(args);
+            s_logger.Info("App shutted down");
+        }
+        catch (Exception e)
+        {
+            s_logger.Fatal(e);
+            throw;
+        }
     }
 
     // Avalonia configuration, don't remove; also used by visual designer.
