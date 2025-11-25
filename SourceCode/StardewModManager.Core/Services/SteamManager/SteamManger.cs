@@ -9,8 +9,8 @@ using Utils;
 
 public class SteamManger : ISteamManager
 {
-    private static readonly ILogger s_logger = LogManager.GetCurrentClassLogger();
-    private readonly IConfigurationService<ModManagerConfig> m_configurationService;
+    private static readonly ILogger                                 s_logger = LogManager.GetCurrentClassLogger();
+    private readonly        IConfigurationService<ModManagerConfig> m_configurationService;
 
     public SteamManger(IConfigurationService<ModManagerConfig> configurationService)
     {
@@ -18,6 +18,8 @@ public class SteamManger : ISteamManager
         SteamPath = ResolveSteamPath();
         CurrentUser = GetLocalUsersList().FirstOrDefault();
         s_logger.Info("SteamManager initialized with path: {SteamPath}", SteamPath);
+        if (!Directory.Exists(SteamPath))
+            s_logger.Warn("Setted steam directory not exists");
     }
 
     public event EventHandler<SteamUser>? CurrentUserChanged;
@@ -31,7 +33,9 @@ public class SteamManger : ISteamManager
         {
             field = value;
             if (value is not null)
-                CurrentUserChanged?.Invoke(this, value!);
+                CurrentUserChanged?.Invoke(this, value);
+
+            s_logger.Info("Selected user changed: {value}", value);
         }
     }
 
@@ -52,7 +56,7 @@ public class SteamManger : ISteamManager
     public IReadOnlyList<SteamUser> GetLocalUsersList()
     {
         s_logger.Debug("Retrieving local users list");
-        
+
         try
         {
             var localConfigs = FindAllLocalConfigs();
@@ -70,15 +74,19 @@ public class SteamManger : ISteamManager
                                 s_logger.Warn("Friends node not found in config: {Config}", config);
                                 return null;
                             }
-                            
+
                             var id = friendsNode.First().Key;
                             var nickName = FindEntry(friendsNode, "PersonaName") as string;
                             nickName = nickName?.Trim('\"');
 
                             if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(nickName))
                             {
-                                s_logger.Warn("Invalid user data in config: {Config}, ID: {Id}, Nickname: {Nickname}", 
-                                    config, id, nickName);
+                                s_logger.Warn(
+                                    "Invalid user data in config: {Config}, ID: {Id}, Nickname: {Nickname}",
+                                    config,
+                                    id,
+                                    nickName
+                                );
                                 return null;
                             }
 
@@ -173,7 +181,7 @@ public class SteamManger : ISteamManager
     public void LaunchSteamGame(string appId)
     {
         s_logger.Info("Launching Steam game: {AppId}", appId);
-        
+
         try
         {
             string steamUri = $"steam://rungameid/{appId}";
@@ -196,7 +204,7 @@ public class SteamManger : ISteamManager
     public void CloseSteam()
     {
         s_logger.Info("Closing Steam");
-        
+
         try
         {
             Process[] steamProcesses = Process.GetProcessesByName("steam");
@@ -225,7 +233,7 @@ public class SteamManger : ISteamManager
                         process.Kill();
                         process.WaitForExit(1000);
                     }
-                    
+
                     s_logger.Debug("Successfully closed Steam process: {Id}", process.Id);
                 }
                 catch (Exception ex)
@@ -233,7 +241,7 @@ public class SteamManger : ISteamManager
                     s_logger.Warn(ex, "Failed to close Steam process: {Id}", process.Id);
                 }
             }
-            
+
             s_logger.Info("Steam closure completed");
         }
         catch (Exception ex)
@@ -257,7 +265,7 @@ public class SteamManger : ISteamManager
             s_logger.Error("No user selected when resolving local config path");
             throw new InvalidOperationException("No user selected");
         }
-        
+
         var path = FindLocalConfig(CurrentUser);
         s_logger.Debug("Resolved local config path: {Path}", path);
         return path;
@@ -301,7 +309,15 @@ public class SteamManger : ISteamManager
         try
         {
             var parsedContent = SteamVdfParser.Parse(content);
-            var gameEntry = FindEntry(parsedContent, appId) as IDictionary<string, object>;
+            var softwareEntry = FindEntry(parsedContent, "Software") as IDictionary<string, object>;
+
+            if (softwareEntry is null)
+            {
+                s_logger.Warn("Software entry not found for app: {AppId}", appId);
+                return null;
+            }
+            
+            var gameEntry = FindEntry(softwareEntry, appId) as IDictionary<string, object>;
 
             if (gameEntry is null)
             {
@@ -309,8 +325,12 @@ public class SteamManger : ISteamManager
                 return null;
             }
 
-            var replaced = ReplaceForFirstKey(gameEntry, "LaunchOptions", $"\"{SteamVdfParser.EscapeVdfString(launchOptions)}\"");
-            
+            var replaced = ReplaceForFirstKey(
+                gameEntry,
+                "LaunchOptions",
+                $"\"{SteamVdfParser.EscapeVdfString(launchOptions)}\""
+            );
+
             if (!replaced)
             {
                 s_logger.Warn("LaunchOptions key not found for app: {AppId}", appId);
@@ -318,7 +338,7 @@ public class SteamManger : ISteamManager
             }
 
             var updatedContent = SteamVdfParser.ToString(parsedContent);
-            s_logger.Debug("Successfully updated launch options in content for app: {AppId}", appId);
+            s_logger.Info("Successfully updated launch options in content for app: {AppId}", appId);
             return updatedContent;
         }
         catch (Exception ex)
@@ -333,24 +353,32 @@ public class SteamManger : ISteamManager
         try
         {
             var parsedContent = SteamVdfParser.Parse(content);
-            var gameEntry = FindEntry(parsedContent, appId) as IDictionary<string, object>;
+            var softwareEntry = FindEntry(parsedContent, "Software") as IDictionary<string, object>;
+
+            if (softwareEntry is null)
+            {
+                s_logger.Warn("Software entry not found for app: {AppId}", appId);
+                return null;
+            }
+            
+            var gameEntry = FindEntry(softwareEntry, appId) as IDictionary<string, object>;
 
             if (gameEntry is null)
             {
-                s_logger.Debug("Game entry not found for app: {AppId}", appId);
+                s_logger.Warn("Game entry not found for app: {AppId}", appId);
                 return null;
             }
 
             var options = FindEntry(gameEntry, "LaunchOptions") as string;
             if (options is null)
             {
-                s_logger.Debug("LaunchOptions not found for app: {AppId}", appId);
+                s_logger.Warn("LaunchOptions not found for app: {AppId}", appId);
                 return null;
             }
 
             options = options.Trim('\"');
             var unescapedOptions = SteamVdfParser.UnescapeVdfString(options);
-            s_logger.Debug("Extracted launch options for app {AppId}: {Options}", appId, unescapedOptions);
+            s_logger.Info("Extracted launch options for app {AppId}: {Options}", appId, unescapedOptions);
             return unescapedOptions;
         }
         catch (Exception ex)
@@ -365,9 +393,14 @@ public class SteamManger : ISteamManager
         if (content.TryGetValue(key, out object? entry))
             return entry;
 
-        foreach (var subContent in content.Values.OfType<IDictionary<string, object>>())
-            if (FindEntry(subContent, key) is { } foundedEntry)
+        foreach (var subContent in content)
+        {
+            if(subContent.Value is not IDictionary<string, object> cc) continue;
+            
+            if (FindEntry(cc, key) is { } foundedEntry)
                 return foundedEntry;
+        }
+            
 
         s_logger.Trace("Entry not found for key: {Key}", key);
         return null;

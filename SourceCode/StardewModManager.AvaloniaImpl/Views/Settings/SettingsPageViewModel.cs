@@ -1,5 +1,7 @@
 ﻿namespace StardewModManager.AvaloniaImpl.Views.Settings;
 
+using System.Diagnostics;
+using Core.Services.Logger;
 using Core.Services.ModManager;
 using Core.Services.SteamManager;
 using FanatikiLauncher.MVVM.ViewModels;
@@ -20,6 +22,8 @@ public class SettingsPageViewModel(Lazy<IScreen> hostScreen, IModManger modMange
 
     [Reactive]
     public string SteamPath { get; private set; } = steamManager.SteamPath;
+
+    public string LogsPath { get; } = NLogConfigManager.LogsFolder;
 
     public async Task SelectStardewPathAsync()
     {
@@ -45,5 +49,12 @@ public class SettingsPageViewModel(Lazy<IScreen> hostScreen, IModManger modMange
         steamManager.SetCustomSteamPath(path);
 
         SteamPath = path;
+    }
+    
+    public void OpenInExplorer(string? path)
+    {
+        if(string.IsNullOrEmpty(path)) return;
+        
+        Process.Start("explorer.exe", path);
     }
 }

@@ -42,4 +42,9 @@
         <SubType>Code</SubType>
       </Compile>
     </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="NLog.config" />
+      <EmbeddedResource Include="NLog.config" />
+    </ItemGroup>
 </Project>

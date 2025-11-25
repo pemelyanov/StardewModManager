@@ -30,11 +30,16 @@ public class SMAPIModManager : IModManger
 
         StardewPath = ResolveStardewPath();
 
+        if (!Path.Exists(StardewPath))
+            s_logger.Warn("Stardew Valley folder not exists");
+
         var isInstalled = CheckIsSMAPIInstalled();
         var isEnabled = CheckIsSMAPIEnabled();
 
         m_isSMAPIInstalled = new BehaviorSubject<bool>(isInstalled);
         m_isSMAPIEnabled = new BehaviorSubject<bool>(isEnabled);
+        s_logger.Info("Is SMAPI Installed: {isSMAPIInstalled}", m_isSMAPIInstalled.Value);
+        s_logger.Info("Is SMAPI Enabled: {isSMAPIEnabled}", m_isSMAPIEnabled.Value);
         RecentModPacks = configurationService.Config.RecentModPacks;
 
         UpdateModsList();
@@ -129,6 +134,10 @@ public class SMAPIModManager : IModManger
             {
                 s_logger.Warn("Something went wrong, installation completed, but SMAPI not installed");
             }
+        }
+        catch (Exception e)
+        {
+            s_logger.Error(e);
         }
         finally
         {
